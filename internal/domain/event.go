@@ -9,5 +9,6 @@ type Event struct {
 	Titulo           string    `json:"titulo,omitempty"`
 	ShortDescription string    `json:"short_description,omitempty"`
 	LongDescription  string    `json:"long_description,omitempty"`
+	State            string    `json:"state,omitempty"`
 	FechaYHora       time.Time `json:"fechayhora,omitempty"`
 }
