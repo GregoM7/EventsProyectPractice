@@ -6,7 +6,12 @@ import (
 	"log"
 	"os"
 
+	"github.com/GregoM7/EventsProyectPractice/cmd/server/controller"
+	"github.com/GregoM7/EventsProyectPractice/internal/user"
+	"github.com/GregoM7/EventsProyectPractice/package/store"
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
@@ -28,6 +33,20 @@ func main() {
 		log.Fatal("Error opening database")
 	}
 	
-	fmt.Print(db)
+	storeSQL := store.NewSQLStore(db)
 
+	//Users
+	repoUsers := user.NewRepository(storeSQL)
+	serviceUsers := user.NewService(repoUsers)
+	controllerUsers := controller.NewUserController(serviceUsers)
+
+	r := gin.Default()
+	r.GET("/ping", func(c *gin.Context) { c.String(200, "pong") })
+
+	users := r.Group("/users")
+	{
+		users.GET("", controllerUsers.ReadAll())
+	}
+	
+	r.Run(":8080")
 }
