@@ -8,10 +8,11 @@ import (
 
 	"github.com/GregoM7/EventsProyectPractice/cmd/server/controller"
 	"github.com/GregoM7/EventsProyectPractice/internal/user"
+	"github.com/GregoM7/EventsProyectPractice/package/middleware"
 	"github.com/GregoM7/EventsProyectPractice/package/store"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -46,6 +47,7 @@ func main() {
 	users := r.Group("/users")
 	{
 		users.GET("", controllerUsers.ReadAll())
+		users.POST("",middleware.AuthenticationMiddleware(), controllerUsers.Create())
 	}
 	
 	r.Run(":8080")

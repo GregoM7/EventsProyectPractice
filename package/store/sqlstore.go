@@ -16,13 +16,15 @@ func NewSQLStore(db *sql.DB) Store {
 
 type Store interface {
 	//------ USER
-	ReadAllUsers()([]domain.User, error)
+	ReadAllUsers() ([]domain.User, error)
+	CreateUser(user domain.User) error
+	ExistsUserByUsername(username string) bool
 	//------ EVENT
 
 	//------ INSCRIPTION
 }
 
-func (s *store) ReadAllUsers() ([]domain.User,error){
+func (s *store) ReadAllUsers() ([]domain.User, error) {
 	var list []domain.User
 	var user domain.User
 
@@ -38,4 +40,40 @@ func (s *store) ReadAllUsers() ([]domain.User,error){
 	}
 	rows.Close()
 	return list, nil
+}
+
+func (s *store) CreateUser(user domain.User) error {
+
+	st, err := s.db.Prepare("INSERT INTO users (username, role, password) VALUES (?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer st.Close()
+
+	res, err := st.Exec(user.Username, user.Role, user.Password)
+	if err != nil {
+		return err
+	}
+	_, err = res.RowsAffected()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+func (s *store) ExistsUserByUsername(username string) bool {
+	var name string
+	row := s.db.QueryRow("SELECT username FROM users WHERE username=?",username)
+
+	if err := row.Scan(&name); err != nil {
+		return false
+	}
+
+	if name == username {
+		return true
+	}
+
+	return false
 }
