@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/GregoM7/EventsProyectPractice/internal/domain"
+	"github.com/GregoM7/EventsProyectPractice/internal/domain/dto"
 	"github.com/GregoM7/EventsProyectPractice/package/store"
 )
 
@@ -11,6 +12,7 @@ type Repository interface {
 	ReadAll() ([]domain.User, error)
 	CreateUser(user domain.User) error
 	ExistsUserByUsername(username string) bool
+	GetUser(username string) (dto.UserGet, error)
 }
 
 type repository struct {
@@ -21,7 +23,7 @@ func NewRepository(store store.Store) Repository {
 	return &repository{store: store}
 }
 
-// ReadAll 
+// ReadAll
 func (r *repository) ReadAll() ([]domain.User, error) {
 	list, err := r.store.ReadAllUsers()
 	if err != nil {
@@ -30,9 +32,9 @@ func (r *repository) ReadAll() ([]domain.User, error) {
 	return list, nil
 }
 
-//CreateUser
+// CreateUser
 func (r *repository) CreateUser(user domain.User) error {
-	if r.ExistsUserByUsername(user.Username){
+	if r.ExistsUserByUsername(user.Username) {
 		return errors.New("Username already exists")
 	}
 	err := r.store.CreateUser(user)
@@ -42,11 +44,17 @@ func (r *repository) CreateUser(user domain.User) error {
 	return nil
 }
 
-//UserCheck
-func (r *repository) ExistsUserByUsername(username string) bool {
-	 boolean := r.store.ExistsUserByUsername(username)
-	 return boolean
+// GetUser
+func (r *repository) GetUser(username string) (dto.UserGet, error) {
+	userdto, err := r.store.GetUser(username)
+	if err != nil {
+		return dto.UserGet{}, errors.New("User Not Found")
+	}
+	return userdto, nil
 }
 
-
-
+// UserCheck
+func (r *repository) ExistsUserByUsername(username string) bool {
+	boolean := r.store.ExistsUserByUsername(username)
+	return boolean
+}

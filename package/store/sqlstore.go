@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/GregoM7/EventsProyectPractice/internal/domain"
+	"github.com/GregoM7/EventsProyectPractice/internal/domain/dto"
 )
 
 type store struct {
@@ -19,6 +20,7 @@ type Store interface {
 	ReadAllUsers() ([]domain.User, error)
 	CreateUser(user domain.User) error
 	ExistsUserByUsername(username string) bool
+	GetUser(username string) (dto.UserGet, error)
 	//------ EVENT
 
 	//------ INSCRIPTION
@@ -65,7 +67,7 @@ func (s *store) CreateUser(user domain.User) error {
 }
 func (s *store) ExistsUserByUsername(username string) bool {
 	var name string
-	row := s.db.QueryRow("SELECT username FROM users WHERE username=?",username)
+	row := s.db.QueryRow("SELECT username FROM users WHERE username=?", username)
 
 	if err := row.Scan(&name); err != nil {
 		return false
@@ -76,4 +78,12 @@ func (s *store) ExistsUserByUsername(username string) bool {
 	}
 
 	return false
+}
+func (s *store) GetUser(username string) (dto.UserGet, error) {
+	var userget dto.UserGet
+	row := s.db.QueryRow("SELECT username, role FROM users WHERE username=?", username)
+	if err := row.Scan(&userget.Username, &userget.Role); err != nil {
+		return dto.UserGet{}, err
+	}
+	return userget, nil
 }
