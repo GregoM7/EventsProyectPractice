@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/GregoM7/EventsProyectPractice/cmd/server/controller"
+	"github.com/GregoM7/EventsProyectPractice/internal/event"
 	"github.com/GregoM7/EventsProyectPractice/internal/user"
 	"github.com/GregoM7/EventsProyectPractice/package/middleware"
 	"github.com/GregoM7/EventsProyectPractice/package/store"
@@ -20,7 +21,7 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 	var (
-		ConnectionString = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
+		ConnectionString = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
 			os.Getenv("user"),
 			os.Getenv("pass"),
 			os.Getenv("hostdb"),
@@ -49,6 +50,15 @@ func main() {
 		users.GET("", controllerUsers.ReadAll())
 		users.POST("",middleware.AuthenticationMiddleware(), controllerUsers.Create())
 	}
-	
+
+	//Events
+	repoEvents := event.NewRepository(storeSQL)
+	serviceEvents := event.NewService(repoEvents)
+	controllerEvents := controller.NewEventController(serviceEvents, serviceUsers)
+
+	events := r.Group("/events")
+	{
+		events.GET("",controllerEvents.ReadAll())
+	}
 	r.Run(":8080")
 }

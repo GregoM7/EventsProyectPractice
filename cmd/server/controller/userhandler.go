@@ -11,10 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Controller interface {
-	ReadAll()
-	Create()
-}
 
 type userController struct {
 	s user.Service

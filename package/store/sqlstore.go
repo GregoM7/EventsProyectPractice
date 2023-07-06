@@ -22,7 +22,8 @@ type Store interface {
 	ExistsUserByUsername(username string) bool
 	GetUser(username string) (dto.UserGet, error)
 	//------ EVENT
-
+	ReadAllEvents() ([]domain.Event, error)
+	ReadAllEventsWithState() ([]domain.Event, error)
 	//------ INSCRIPTION
 }
 
@@ -86,4 +87,39 @@ func (s *store) GetUser(username string) (dto.UserGet, error) {
 		return dto.UserGet{}, err
 	}
 	return userget, nil
+}
+
+func (s *store) ReadAllEvents() ([]domain.Event, error) {
+	var list []domain.Event
+
+	rows, err := s.db.Query("SELECT * FROM eventable")
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var event domain.Event
+		if err := rows.Scan(&event.Id, &event.Titulo, &event.ShortDescription, &event.LongDescription, &event.State, &event.FechaYHora); err != nil {
+			return nil, err
+		}
+		list = append(list, event)
+	}
+	rows.Close()
+	return list, nil
+}
+
+func (s *store) ReadAllEventsWithState() ([]domain.Event, error) {
+	var list []domain.Event
+	var event domain.Event
+	rows, err := s.db.Query("SELECT * FROM eventable WHERE state=?", "PUBLISHED")
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		if err := rows.Scan(&event.Id, &event.Titulo, &event.ShortDescription, &event.LongDescription, &event.State, &event.FechaYHora); err != nil {
+			return nil, err
+		}
+		list = append(list, event)
+	}
+	rows.Close()
+	return list, nil
 }
