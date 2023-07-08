@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 
 	"github.com/GregoM7/EventsProyectPractice/internal/domain"
 	"github.com/GregoM7/EventsProyectPractice/internal/domain/dto"
@@ -24,6 +25,10 @@ type Store interface {
 	//------ EVENT
 	ReadAllEvents() ([]domain.Event, error)
 	ReadAllEventsWithState() ([]domain.Event, error)
+	ReadEventById(id int) (domain.Event, error)
+	CreateEvent(event domain.Event) error
+	DeleteEvent(id int) error
+	UpdateEvent(id int, event domain.Event) error
 	//------ INSCRIPTION
 }
 
@@ -89,6 +94,18 @@ func (s *store) GetUser(username string) (dto.UserGet, error) {
 	return userget, nil
 }
 
+func (s *store) ReadEventById(id int) (domain.Event, error) {
+	//defer func () {s.db.Close()}()
+	var event domain.Event
+	row := s.db.QueryRow("SELECT * FROM eventable WHERE id=?", id)
+
+	if err := row.Scan(&event.Id, &event.Titulo, &event.ShortDescription, &event.LongDescription, &event.State, &event.FechaYHora); err != nil {
+		return domain.Event{}, err
+		//panic(patient
+	}
+	return event, nil
+}
+
 func (s *store) ReadAllEvents() ([]domain.Event, error) {
 	var list []domain.Event
 
@@ -122,4 +139,58 @@ func (s *store) ReadAllEventsWithState() ([]domain.Event, error) {
 	}
 	rows.Close()
 	return list, nil
+}
+
+func (s *store) CreateEvent(event domain.Event) error {
+
+	st, err := s.db.Prepare("INSERT INTO eventable (titulo, shortdescription, longdescription, state, fechayhora) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer st.Close()
+
+	res, err := st.Exec(event.Titulo, event.ShortDescription, event.LongDescription, event.State, event.FechaYHora)
+	if err != nil {
+		return err
+	}
+	_, err = res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+func (s *store) DeleteEvent(id int) error {
+	//Preguntar si esta bien usar un metodo
+	var idselect int
+	row := s.db.QueryRow("SELECT id FROM eventable WHERE id = ?", id)
+	if err := row.Scan(&idselect); err != nil {
+		return errors.New("The event doest exists.")
+	}
+	query := "DELETE FROM eventable WHERE id = ?"
+	_, err := s.db.Exec(query, idselect)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+func (s *store) UpdateEvent(id int, event domain.Event) error {
+	st, err := s.db.Prepare("UPDATE eventable SET titulo = ?, shortdescription = ?, longdescription = ?, state = ?, fechayhora = ? WHERE id = ?")
+	if err != nil {
+		return err
+	}
+	defer st.Close()
+
+	res, err := st.Exec(event.Titulo, event.ShortDescription, event.LongDescription, event.State, event.FechaYHora, id)
+	if err != nil {
+		return err
+	}
+
+	_, err = res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
